@@ -1,0 +1,28 @@
+server:
+  port: 8000
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/otus
+    username: admin
+    password: password
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    distribution:
+      slo:
+        http.server.requests: 10ms, 50ms, 100ms, 200ms, 300ms, 400ms, 500ms
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true

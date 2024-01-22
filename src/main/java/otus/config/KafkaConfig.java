@@ -58,7 +58,12 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic topic1() {
-        return TopicBuilder.name("otus").build();
+        return TopicBuilder.name(producerYamlProperties.getSuccessTopic()).build();
+    }
+
+    @Bean
+    public NewTopic topic2() {
+        return TopicBuilder.name(producerYamlProperties.getFailTopic()).build();
     }
 
     @Bean

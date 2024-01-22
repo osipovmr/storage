@@ -16,4 +16,6 @@ import java.util.Map;
 public class KafkaProducerYamlProperties {
 
     private Map<String, String> propertiesMap;
+    private String successTopic;
+    private String failTopic;
 }

@@ -1,4 +1,4 @@
-package otus;
+package otus.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import otus.model.entity.Product;

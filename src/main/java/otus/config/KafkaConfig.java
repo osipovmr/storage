@@ -58,12 +58,12 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic topic1() {
-        return TopicBuilder.name(producerYamlProperties.getSuccessTopic()).build();
+        return TopicBuilder.name("order200").build();
     }
 
     @Bean
     public NewTopic topic2() {
-        return TopicBuilder.name(producerYamlProperties.getFailTopic()).build();
+        return TopicBuilder.name("order500").build();
     }
 
     @Bean

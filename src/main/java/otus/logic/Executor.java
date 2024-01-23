@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import otus.config.yaml.KafkaProducerYamlProperties;
 import otus.model.dto.OrderDto;
 import otus.model.entity.Product;
 import otus.repository.ProductRepository;
@@ -20,7 +19,6 @@ public class Executor {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper mapper;
     private final ProductRepository repository;
-    private final KafkaProducerYamlProperties producerYamlProperties;
 
     @KafkaListener(topics = "newOrder")
     public void listenNew(String message) throws JsonProcessingException {
@@ -29,10 +27,13 @@ public class Executor {
         int available = product.getAvailableQuantity();
         int need = dto.getQuantity();
         if (available >= need) {
-            kafkaTemplate.send(producerYamlProperties.getSuccessTopic(), String.valueOf(dto.getOrderUUID()));
+            product.setReservedQuantity(need);
+            product.setAvailableQuantity(available - need);
+            repository.save(product);
+            kafkaTemplate.send("order200", String.valueOf(dto.getOrderUUID()));
             log.info("Зарезервировано {} из {}.", need, available);
         } else {
-            kafkaTemplate.send(producerYamlProperties.getFailTopic(), String.valueOf(dto.getOrderUUID()));
+            kafkaTemplate.send("order500", String.valueOf(dto.getOrderUUID()));
             log.info("Невозможно зарезервировать {} из {}.", need, available);
         }
     }

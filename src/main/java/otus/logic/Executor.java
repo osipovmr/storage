@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import otus.model.dto.OrderDto;
+import otus.model.dto.ProcessOrderDto;
 import otus.model.entity.Product;
 import otus.repository.ProductRepository;
 
@@ -22,38 +22,32 @@ public class Executor {
 
     @KafkaListener(topics = "newOrder")
     public void listenNew(String message) throws JsonProcessingException {
-        OrderDto dto = mapper.readValue(message, OrderDto.class);
+        ProcessOrderDto dto = mapper.readValue(message, ProcessOrderDto.class);
         Product product = repository.findById(dto.getProductUUID()).orElseThrow();
-        int available = product.getAvailableQuantity();
-        int need = dto.getQuantity();
-        if (available >= need) {
-            product.setReservedQuantity(need);
-            product.setAvailableQuantity(available - need);
-            repository.save(product);
-            kafkaTemplate.send("order200", String.valueOf(dto.getOrderUUID()));
-            log.info("Зарезервировано {} из {}.", need, available);
+        if (dto.isNew()) {
+            int available = product.getAvailableQuantity();
+            int need = dto.getQuantity();
+            if (available >= need) {
+                product.setReservedQuantity(need);
+                product.setAvailableQuantity(available - need);
+                dto.setAllowReservation(true);
+                log.info("Зарезервировано {} из {}.", need, available);
+            } else {
+                dto.setAllowReservation(false);
+                dto.setServiceName("storage");
+                log.info("Невозможно зарезервировать {} из {}.", need, available);
+            }
+            kafkaTemplate.send("processOrder", mapper.writeValueAsString(dto));
         } else {
-            kafkaTemplate.send("order500", String.valueOf(dto.getOrderUUID()));
-            log.info("Невозможно зарезервировать {} из {}.", need, available);
+            if (dto.isReservedByAllServices()) {
+                product.setReservedQuantity(0);
+                log.info("Списание товара со склада по заказу {}.", dto.getOrderUUID());
+            } else {
+                product.setAvailableQuantity(product.getAvailableQuantity() + product.getReservedQuantity());
+                product.setReservedQuantity(0);
+                log.info("Отмена резервирования.");
+            }
         }
-    }
-
-    @KafkaListener(topics = "executeOrder")
-    public void executeOrder(String message) throws JsonProcessingException {
-        OrderDto dto = mapper.readValue(message, OrderDto.class);
-        Product product = repository.findById(dto.getProductUUID()).orElseThrow();
-        product.setReservedQuantity(0);
-        log.info("Списание товара со склада.");
-        repository.save(product);
-    }
-
-    @KafkaListener(topics = "cancel")
-    public void listenRollback(String message) throws JsonProcessingException {
-        OrderDto dto = mapper.readValue(message, OrderDto.class);
-        Product product = repository.findById(dto.getProductUUID()).orElseThrow();
-        product.setAvailableQuantity(product.getAvailableQuantity() + product.getReservedQuantity());
-        product.setReservedQuantity(0);
-        log.info("Отмена резервирования.");
         repository.save(product);
     }
 }

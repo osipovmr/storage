@@ -58,12 +58,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic topic1() {
-        return TopicBuilder.name("order200").build();
-    }
-
-    @Bean
-    public NewTopic topic2() {
-        return TopicBuilder.name("order500").build();
+        return TopicBuilder.name("processOrder").build();
     }
 
     @Bean

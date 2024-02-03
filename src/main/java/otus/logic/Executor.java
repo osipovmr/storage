@@ -4,14 +4,24 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import otus.model.dto.ProcessOrderDto;
+import otus.model.dto.UploadProductDto;
 import otus.model.entity.Product;
 import otus.repository.ProductRepository;
 
-@Service
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping(value = "/storage")
 @RequiredArgsConstructor
 @Slf4j
 public class Executor {
@@ -49,6 +59,21 @@ public class Executor {
             }
         }
         repository.save(product);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> checkAccount(@RequestBody List<UploadProductDto> uploadProductDtoList) {
+        List<Product> list = new ArrayList<>();
+        for (UploadProductDto dto : uploadProductDtoList) {
+            Product product = Product.builder()
+                    .name(dto.getName())
+                    .price(dto.getPrice())
+                    .availableQuantity(dto.getQuantity())
+                    .build();
+            list.add(product);
+        }
+        repository.saveAll(list);
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 }
 

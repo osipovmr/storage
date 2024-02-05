@@ -8,11 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import otus.model.dto.ProcessOrderDto;
+import otus.model.dto.ProductDto;
 import otus.model.dto.UploadProductDto;
 import otus.model.entity.Product;
 import otus.repository.ProductRepository;
@@ -74,6 +72,21 @@ public class Executor {
         }
         repository.saveAll(list);
         return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    @GetMapping("/product")
+    public ResponseEntity<List<ProductDto>> getProducts() {
+        List<Product> list = repository.findAll();
+        List<ProductDto> dtoList = list
+                .stream()
+                .map(product -> ProductDto.builder()
+                        .productUUID(product.getProductUUID())
+                        .name(product.getName())
+                        .price(product.getPrice())
+                        .availableQuantity(product.getAvailableQuantity())
+                        .build())
+                .toList();
+        return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
 }
 

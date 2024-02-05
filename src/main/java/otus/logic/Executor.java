@@ -62,7 +62,7 @@ public class Executor {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> checkAccount(@RequestBody List<UploadProductDto> uploadProductDtoList) {
+    public ResponseEntity<?> uploadProducts(@RequestBody List<UploadProductDto> uploadProductDtoList) {
         List<Product> list = new ArrayList<>();
         for (UploadProductDto dto : uploadProductDtoList) {
             Product product = Product.builder()
